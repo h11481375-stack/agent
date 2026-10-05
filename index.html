@@ -3,121 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>商品快速上品工具</title>
+    <title>跨境商品两阶段上品控制台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-xl w-full bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6 md:p-8 space-y-6">
         
-        <!-- 标题 -->
+        <!-- 头部标题 -->
         <div class="flex items-center space-x-3 border-b border-slate-700 pb-4">
             <div class="p-3 bg-indigo-600/20 text-indigo-400 rounded-xl">
-                <i class="fa-solid fa-bolt text-2xl"></i>
+                <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
             </div>
             <div>
-                <h1 class="text-xl font-bold text-white">跨境商品极简上品助手</h1>
-                <p class="text-xs text-slate-400">手动精选 URL ➔ 一键同步工作流</p>
+                <h1 class="text-xl font-bold text-white">两步式自动化上品控制台</h1>
+                <p class="text-xs text-slate-400">Coze 抓取落库 Sheet ➔ Make 触发 Run Once</p>
             </div>
         </div>
 
-        <!-- Webhook 配置 -->
-        <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Make Webhook URL</label>
-            <input type="text" id="webhookUrl" placeholder="https://hook.eu1.make.com/your-custom-webhook" 
-                class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-600">
-        </div>
+        <!-- API 配置参数展开区 -->
+        <details class="bg-slate-900/60 rounded-xl p-4 border border-slate-700/60 text-xs space-y-3">
+            <summary class="font-medium text-slate-300 cursor-pointer flex justify-between items-center">
+                <span>⚙️ API 密钥与工作流配置 (第一次使用前配置)</span>
+                <i class="fa-solid fa-chevron-down text-slate-500"></i>
+            </summary>
+            
+            <div class="space-y-3 pt-2">
+                <!-- Coze 配置 -->
+                <div class="space-y-1">
+                    <label class="text-slate-400 font-semibold">Coze API Token (Personal Access Token):</label>
+                    <input type="password" id="cozeToken" placeholder="pat_xxxxx" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-slate-400 font-semibold">Coze Workflow ID:</label>
+                    <input type="text" id="cozeWorkflowId" placeholder="例如: 73505836754923xxxxx" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200">
+                </div>
 
-        <!-- 商品 URL 输入 -->
+                <hr class="border-slate-800">
+
+                <!-- Make 配置 -->
+                <div class="space-y-1">
+                    <label class="text-slate-400 font-semibold">Make API Token:</label>
+                    <input type="password" id="makeToken" placeholder="例如: 4a2b3c4d-xxxx-xxxx" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-slate-400 font-semibold">Make Scenario ID (场景ID):</label>
+                    <input type="text" id="makeScenarioId" placeholder="例如: 123456" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-slate-400 font-semibold">Make 地区 Server Zone:</label>
+                    <select id="makeZone" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200">
+                        <option value="https://eu1.make.com">eu1.make.com (欧洲 1 常用)</option>
+                        <option value="https://us1.make.com">us1.make.com (美洲 1)</option>
+                        <option value="https://eu2.make.com">eu2.make.com (欧洲 2)</option>
+                    </select>
+                </div>
+            </div>
+        </details>
+
+        <!-- 商品 URL 输入区 -->
         <div class="space-y-2">
             <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">商品链接 (Product URL)</label>
-            <div class="relative">
-                <textarea id="productUrl" rows="3" placeholder="请粘贴 1688 / 淘宝 / 拼多多 商品链接..."
-                    class="w-full bg-slate-900/80 border border-slate-700 rounded-xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-600 resize-none"></textarea>
-            </div>
+            <textarea id="productUrl" rows="3" placeholder="粘贴 1688 / 淘宝商品链接..."
+                class="w-full bg-slate-900/80 border border-slate-700 rounded-xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-600 resize-none"></textarea>
         </div>
 
-        <!-- 按钮组 -->
+        <!-- 两个核心控制按钮 -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <!-- 按钮1：提取/校验链接 -->
-            <button onclick="handlePaste()" 
-                class="flex items-center justify-center space-x-2 bg-slate-700 hover:bg-slate-600 text-slate-200 py-3 px-4 rounded-xl font-medium text-sm transition-all active:scale-95 shadow-md">
-                <i class="fa-regular fa-clipboard"></i>
-                <span>读取剪贴板链接</span>
+            <!-- 按钮 1：启动 Coze 写入 Sheet -->
+            <button id="btnCoze" onclick="runCozeWorkflow()" 
+                class="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white py-3.5 px-4 rounded-xl font-semibold text-sm transition-all active:scale-95 shadow-lg shadow-blue-600/25">
+                <i class="fa-solid fa-table-list"></i>
+                <span>步骤 1: Coze 写入 Sheet</span>
             </button>
 
-            <!-- 按钮2：Make 启动上品 -->
-            <button id="submitBtn" onclick="triggerMakeWorkflow()" 
-                class="flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white py-3 px-4 rounded-xl font-semibold text-sm transition-all active:scale-95 shadow-lg shadow-indigo-600/30">
-                <i class="fa-solid fa-paper-plane"></i>
-                <span>Make 启动上品</span>
+            <!-- 按钮 2：启动 Make Run Once -->
+            <button id="btnMake" onclick="runMakeScenario()" 
+                class="flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 px-4 rounded-xl font-semibold text-sm transition-all active:scale-95 shadow-lg shadow-emerald-600/25">
+                <i class="fa-solid fa-play"></i>
+                <span>步骤 2: Make 启动上品 (Run once)</span>
             </button>
         </div>
 
-        <!-- 状态提醒面板 -->
-        <div id="statusPanel" class="hidden p-4 rounded-xl text-sm transition-all"></div>
+        <!-- 状态日志输出框 -->
+        <div id="statusPanel" class="hidden p-4 rounded-xl text-xs font-mono transition-all"></div>
 
     </div>
 
     <script>
-        // 从剪贴板粘贴
-        async function handlePaste() {
-            try {
-                const text = await navigator.clipboard.readText();
-                if (text) {
-                    document.getElementById('productUrl').value = text;
-                    showStatus('已读取剪贴板内容！', 'success');
+        // 页面加载时自动读取 localStorage 本地保存的配置
+        window.onload = function() {
+            ['cozeToken', 'cozeWorkflowId', 'makeToken', 'makeScenarioId', 'makeZone'].forEach(id => {
+                if (localStorage.getItem(id)) {
+                    document.getElementById(id).value = localStorage.getItem(id);
                 }
-            } catch (err) {
-                showStatus('读取剪贴板失败，请手动右键粘贴', 'error');
-            }
-        }
+                document.getElementById(id).addEventListener('change', (e) => {
+                    localStorage.setItem(id, e.target.value);
+                });
+            });
+        };
 
-        // 触发 Make 工作流
-        async function triggerMakeWorkflow() {
-            const webhookUrl = document.getElementById('webhookUrl').value.trim();
-            const productUrl = document.getElementById('productUrl').value.trim();
-            const submitBtn = document.getElementById('submitBtn');
+        // 步骤 1：触发 Coze 写入 Sheet
+        async function runCozeWorkflow() {
+            const url = document.getElementById('productUrl').value.trim();
+            const token = document.getElementById('cozeToken').value.trim();
+            const workflowId = document.getElementById('cozeWorkflowId').value.trim();
 
-            if (!productUrl) {
-                showStatus('请输入或粘贴商品 URL！', 'error');
-                return;
-            }
+            if (!url) return showStatus('❌ 请先输入商品链接！', 'error');
+            if (!token || !workflowId) return showStatus('❌ 请展开顶部菜单，填写 Coze Token 和 Workflow ID！', 'error');
 
-            if (!webhookUrl) {
-                showStatus('请输入 Make 的 Custom Webhook 链接！', 'error');
-                return;
-            }
-
-            // 按钮禁用状态
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i><span>提交中...</span>`;
+            const btn = document.getElementById('btnCoze');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Coze 执行中...</span>`;
 
             try {
-                // 发送 POST 请求给 Make 的 Webhook
-                const response = await fetch(webhookUrl, {
+                // 调用 Coze 官方开放平台 Workflow API
+                const response = await fetch('https://api.coze.com/v1/workflow/run', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
-                        url: productUrl,
-                        timestamp: new Date().toISOString()
+                        workflow_id: workflowId,
+                        parameters: {
+                            input: url // 对应你 Coze 开始节点的输入变量名（如果是 url 请修改此处）
+                        }
                     })
                 });
 
-                if (response.ok) {
-                    showStatus('🚀 触发成功！Make 工作流已收到任务', 'success');
-                    document.getElementById('productUrl').value = ''; // 清空输入框
+                const resData = await response.json();
+                if (resData.code === 0) {
+                    showStatus('✅ Coze 执行成功！商品数据已落库 Google Sheet。接下来可点击【步骤 2】。', 'success');
                 } else {
-                    showStatus(`触发失败，服务器返回码: ${response.status}`, 'error');
+                    showStatus(`❌ Coze 运行失败: ${resData.msg || JSON.stringify(resData)}`, 'error');
                 }
-            } catch (error) {
-                showStatus('请求失败，请检查 Webhook URL 是否跨域或有效', 'error');
+            } catch (err) {
+                showStatus(`❌ Coze API 请求异常（注意检查跨域限制或 Token）: ${err.message}`, 'error');
             } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i><span>Make 启动上品</span>`;
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-table-list"></i><span>步骤 1: Coze 写入 Sheet</span>`;
             }
         }
 
+        // 步骤 2：触发 Make 场景 Run Once
+        async function runMakeScenario() {
+            const token = document.getElementById('makeToken').value.trim();
+            const scenarioId = document.getElementById('makeScenarioId').value.trim();
+            const zone = document.getElementById('makeZone').value.trim();
+
+            if (!token || !scenarioId) return showStatus('❌ 请展开顶部菜单，填写 Make API Token 和 Scenario ID！', 'error');
+
+            const btn = document.getElementById('btnMake');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span> Make 触发中...</span>`;
+
+            try {
+                // 调用 Make 官方 API 执行 Run Once (无需 Webhook 节点)
+                const response = await fetch(`${zone}/api/v2/scenarios/${scenarioId}/run`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    showStatus('🚀 Make 触发成功！已远程启动 Run Once 自动化上品。', 'success');
+                } else {
+                    const errText = await response.text();
+                    showStatus(`❌ Make 触发失败 [HTTP ${response.status}]: ${errText}`, 'error');
+                }
+            } catch (err) {
+                showStatus(`❌ Make 请求失败: ${err.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-play"></i><span>步骤 2: Make 启动上品 (Run once)</span>`;
+            }
+        }
+
+        // 状态提示显示函数
         function showStatus(msg, type) {
             const panel = document.getElementById('statusPanel');
             panel.classList.remove('hidden', 'bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/30', 'bg-rose-500/10', 'text-rose-400', 'border-rose-500/30');
