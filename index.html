@@ -105,47 +105,58 @@
         };
 
         // 步骤 1：触发 Coze 写入 Sheet
-        async function runCozeWorkflow() {
-            const url = document.getElementById('productUrl').value.trim();
-            const token = document.getElementById('cozeToken').value.trim();
-            const workflowId = document.getElementById('cozeWorkflowId').value.trim();
+        // 步骤 1：触发 Coze 写入 Sheet (带日志打印版)
+async function runCozeWorkflow() {
+    const url = document.getElementById('productUrl').value.trim();
+    const token = document.getElementById('cozeToken').value.trim();
+    const workflowId = document.getElementById('cozeWorkflowId').value.trim();
 
-            if (!url) return showStatus('❌ 请先输入商品链接！', 'error');
-            if (!token || !workflowId) return showStatus('❌ 请展开顶部菜单，填写 Coze Token 和 Workflow ID！', 'error');
+    if (!url) return showStatus('❌ 请先输入商品链接！', 'error');
+    if (!token || !workflowId) return showStatus('❌ 请填写 Coze Token 和 Workflow ID！', 'error');
 
-            const btn = document.getElementById('btnCoze');
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Coze 执行中...</span>`;
+    const btn = document.getElementById('btnCoze');
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Coze 执行中...</span>`;
 
-            try {
-                // 调用 Coze 官方开放平台 Workflow API
-                const response = await fetch('https://api.coze.com/v1/workflow/run', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        workflow_id: workflowId,
-                        parameters: {
-                            url: url // 对应 Coze 开始节点的输入变量名
-                        }
-                    })
-                });
+    try {
+        console.log('--- 开始请求 Coze API ---');
+        console.log('传入参数 url:', url);
+        console.log('Workflow ID:', workflowId);
 
-                const resData = await response.json();
-                if (resData.code === 0) {
-                    showStatus('✅ Coze 执行成功！商品数据已落库 Google Sheet。接下来可点击【步骤 2】。', 'success');
-                } else {
-                    showStatus(`❌ Coze 运行失败: ${resData.msg || JSON.stringify(resData)}`, 'error');
+        const response = await fetch('https://api.coze.com/v1/workflow/run', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                workflow_id: workflowId,
+                parameters: {
+                    url: url // 对应开始节点的变量名 url
                 }
-            } catch (err) {
-                showStatus(`❌ Coze API 请求异常: ${err.message}`, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-table-list"></i><span>步骤 1: Coze 写入 Sheet</span>`;
-            }
+            })
+        });
+
+        const resData = await response.json();
+        console.log('👉 Coze API 返回的原始数据:', resData);
+
+        if (resData.code === 0) {
+            // 解析 Coze 返回的具体执行结果内容
+            const executeData = resData.data ? JSON.parse(resData.data) : {};
+            console.log('👉 Coze 工作流内部节点输出:', executeData);
+            
+            showStatus(`✅ 请求已发送！Coze 接口响应 code: 0。详细日志请看 Console 控制台。`, 'success');
+        } else {
+            showStatus(`❌ Coze 运行失败 [错误码 ${resData.code}]: ${resData.msg}`, 'error');
         }
+    } catch (err) {
+        console.error('❌ 请求发生异常:', err);
+        showStatus(`❌ Coze API 请求异常: ${err.message}`, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-table-list"></i><span>步骤 1: Coze 写入 Sheet</span>`;
+    }
+}
 
         // 步骤 2：触发 Make 场景 Run Once
         async function runMakeScenario() {
