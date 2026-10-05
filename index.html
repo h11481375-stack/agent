@@ -53,7 +53,8 @@
                 <div class="space-y-1">
                     <label class="text-slate-400 font-semibold">Make 地区 Server Zone:</label>
                     <select id="makeZone" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200">
-                        <option value="https://eu1.make.com">eu1.make.com (欧洲 1 常用)</option>
+                        <option value="https://us2.make.com">us2.make.com (美洲 2)</option>
+                        <option value="https://eu1.make.com">eu1.make.com (欧洲 1)</option>
                         <option value="https://us1.make.com">us1.make.com (美洲 1)</option>
                         <option value="https://eu2.make.com">eu2.make.com (欧洲 2)</option>
                     </select>
@@ -127,7 +128,7 @@
                     body: JSON.stringify({
                         workflow_id: workflowId,
                         parameters: {
-                            input: url // 对应你 Coze 开始节点的输入变量名（如果是 url 请修改此处）
+                            input: url // 对应 Coze 开始节点的输入变量名
                         }
                     })
                 });
@@ -139,7 +140,7 @@
                     showStatus(`❌ Coze 运行失败: ${resData.msg || JSON.stringify(resData)}`, 'error');
                 }
             } catch (err) {
-                showStatus(`❌ Coze API 请求异常（注意检查跨域限制或 Token）: ${err.message}`, 'error');
+                showStatus(`❌ Coze API 请求异常: ${err.message}`, 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fa-solid fa-table-list"></i><span>步骤 1: Coze 写入 Sheet</span>`;
@@ -156,7 +157,7 @@
 
             const btn = document.getElementById('btnMake');
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span> Make 触发中...</span>`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Make 触发中...</span>`;
 
             try {
                 // 调用 Make 官方 API 执行 Run Once (无需 Webhook 节点)
