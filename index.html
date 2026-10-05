@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品快速上品工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-xl w-full bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6 md:p-8 space-y-6">
+        
+        <!-- 标题 -->
+        <div class="flex items-center space-x-3 border-b border-slate-700 pb-4">
+            <div class="p-3 bg-indigo-600/20 text-indigo-400 rounded-xl">
+                <i class="fa-solid fa-bolt text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-white">跨境商品极简上品助手</h1>
+                <p class="text-xs text-slate-400">手动精选 URL ➔ 一键同步工作流</p>
+            </div>
+        </div>
+
+        <!-- Webhook 配置 -->
+        <div class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Make Webhook URL</label>
+            <input type="text" id="webhookUrl" placeholder="https://hook.eu1.make.com/your-custom-webhook" 
+                class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-600">
+        </div>
+
+        <!-- 商品 URL 输入 -->
+        <div class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">商品链接 (Product URL)</label>
+            <div class="relative">
+                <textarea id="productUrl" rows="3" placeholder="请粘贴 1688 / 淘宝 / 拼多多 商品链接..."
+                    class="w-full bg-slate-900/80 border border-slate-700 rounded-xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-600 resize-none"></textarea>
+            </div>
+        </div>
+
+        <!-- 按钮组 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <!-- 按钮1：提取/校验链接 -->
+            <button onclick="handlePaste()" 
+                class="flex items-center justify-center space-x-2 bg-slate-700 hover:bg-slate-600 text-slate-200 py-3 px-4 rounded-xl font-medium text-sm transition-all active:scale-95 shadow-md">
+                <i class="fa-regular fa-clipboard"></i>
+                <span>读取剪贴板链接</span>
+            </button>
+
+            <!-- 按钮2：Make 启动上品 -->
+            <button id="submitBtn" onclick="triggerMakeWorkflow()" 
+                class="flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white py-3 px-4 rounded-xl font-semibold text-sm transition-all active:scale-95 shadow-lg shadow-indigo-600/30">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Make 启动上品</span>
+            </button>
+        </div>
+
+        <!-- 状态提醒面板 -->
+        <div id="statusPanel" class="hidden p-4 rounded-xl text-sm transition-all"></div>
+
+    </div>
+
+    <script>
+        // 从剪贴板粘贴
+        async function handlePaste() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    document.getElementById('productUrl').value = text;
+                    showStatus('已读取剪贴板内容！', 'success');
+                }
+            } catch (err) {
+                showStatus('读取剪贴板失败，请手动右键粘贴', 'error');
+            }
+        }
+
+        // 触发 Make 工作流
+        async function triggerMakeWorkflow() {
+            const webhookUrl = document.getElementById('webhookUrl').value.trim();
+            const productUrl = document.getElementById('productUrl').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!productUrl) {
+                showStatus('请输入或粘贴商品 URL！', 'error');
+                return;
+            }
+
+            if (!webhookUrl) {
+                showStatus('请输入 Make 的 Custom Webhook 链接！', 'error');
+                return;
+            }
+
+            // 按钮禁用状态
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i><span>提交中...</span>`;
+
+            try {
+                // 发送 POST 请求给 Make 的 Webhook
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: productUrl,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                if (response.ok) {
+                    showStatus('🚀 触发成功！Make 工作流已收到任务', 'success');
+                    document.getElementById('productUrl').value = ''; // 清空输入框
+                } else {
+                    showStatus(`触发失败，服务器返回码: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showStatus('请求失败，请检查 Webhook URL 是否跨域或有效', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i><span>Make 启动上品</span>`;
+            }
+        }
+
+        function showStatus(msg, type) {
+            const panel = document.getElementById('statusPanel');
+            panel.classList.remove('hidden', 'bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/30', 'bg-rose-500/10', 'text-rose-400', 'border-rose-500/30');
+            panel.classList.add('border');
+
+            if (type === 'success') {
+                panel.classList.add('bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/30');
+            } else {
+                panel.classList.add('bg-rose-500/10', 'text-rose-400', 'border-rose-500/30');
+            }
+            panel.innerText = msg;
+        }
+    </script>
+</body>
+</html>
